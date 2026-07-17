@@ -1,0 +1,2 @@
+-- Bu dosya artık product-reviews.sql içinde birleştirildi.
+-- Lütfen supabase/product-reviews.sql dosyasını çalıştırın.
