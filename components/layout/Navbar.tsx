@@ -46,7 +46,7 @@ export default function Navbar() {
   }
 
   return (
-    <header className="sticky top-0 z-50 border-b border-slate-200/80 bg-white/90 backdrop-blur-lg">
+    <header className="border-b border-slate-200/80 bg-white">
       <div className="mx-auto flex min-h-[5.5rem] max-w-6xl items-center gap-3 px-4 py-2 sm:min-h-[6.5rem] sm:gap-5 sm:px-5 md:min-h-[7.5rem]">
         <Logo size="nav" priority />
 
