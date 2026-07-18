@@ -34,14 +34,14 @@ export default function ProductDetail({
   const { customText, setCustomText, redirecting, handleBuy, toast, setToast, showCustomization } =
     useShopierPurchase(product);
 
-  const [reviews, setReviews] = useState(initialReviews);
+  const [reviews] = useState(initialReviews);
   const [userId, setUserId] = useState<string | null>(null);
+  const [hasReviewed, setHasReviewed] = useState(false);
   const category = product.category ?? "Diğer";
   const avg =
     reviews.length > 0
       ? reviews.reduce((s, r) => s + r.rating, 0) / reviews.length
       : averageRating;
-  const hasReviewed = userId ? reviews.some((r) => r.user_id === userId) : false;
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => setUserId(user?.id ?? null));
@@ -51,17 +51,47 @@ export default function ProductDetail({
     return () => subscription.unsubscribe();
   }, [supabase]);
 
+  useEffect(() => {
+    let cancelled = false;
+
+    async function checkReviewed(uid: string | null) {
+      if (!uid) {
+        if (!cancelled) setHasReviewed(false);
+        return;
+      }
+
+      const { data } = await supabase
+        .from("product_reviews")
+        .select("id")
+        .eq("product_id", product.id)
+        .eq("user_id", uid)
+        .maybeSingle();
+
+      if (!cancelled) setHasReviewed(Boolean(data));
+    }
+
+    checkReviewed(userId);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [product.id, supabase, userId]);
+
   async function handleReviewSubmit(e: FormEvent<HTMLFormElement>, rating: number, comment: string) {
     e.preventDefault();
     if (!userId) {
       router.push(`/giris?redirect=/products/${product.id}`);
       return;
     }
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from("product_reviews")
-      .insert({ product_id: product.id, user_id: userId, rating, comment: comment.trim() })
-      .select()
-      .single();
+      .insert({
+        product_id: product.id,
+        user_id: userId,
+        rating,
+        comment: comment.trim(),
+        is_approved: false,
+      });
     if (error) {
       setToast({
         message: error.code === "23505" ? "Bu ürüne zaten yorum yaptınız." : error.message,
@@ -69,8 +99,11 @@ export default function ProductDetail({
       });
       return;
     }
-    setReviews((prev) => [data as ProductReview, ...prev]);
-    setToast({ message: "Değerlendirmeniz yayınlandı!", type: "success" });
+    setHasReviewed(true);
+    setToast({
+      message: "Yorumunuz alındı, yönetici onayından sonra yayınlanacaktır.",
+      type: "success",
+    });
     router.refresh();
   }
 

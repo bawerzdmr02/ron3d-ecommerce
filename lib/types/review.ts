@@ -5,4 +5,5 @@ export interface ProductReview {
   rating: number;
   comment: string;
   created_at: string;
+  is_approved?: boolean;
 }

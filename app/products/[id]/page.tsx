@@ -35,6 +35,7 @@ async function getReviews(productId: string): Promise<ProductReview[]> {
     .from("product_reviews")
     .select("*")
     .eq("product_id", productId)
+    .eq("is_approved", true)
     .order("created_at", { ascending: false });
 
   if (error) {
@@ -45,6 +46,7 @@ async function getReviews(productId: string): Promise<ProductReview[]> {
   return (data ?? []).map((row) => ({
     ...row,
     rating: Number(row.rating),
+    is_approved: Boolean(row.is_approved),
   }));
 }
 

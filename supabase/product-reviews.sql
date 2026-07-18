@@ -15,6 +15,7 @@ create table public.product_reviews (
   user_id uuid not null references auth.users(id) on delete cascade,
   rating integer not null check (rating >= 1 and rating <= 5),
   comment text not null default '',
+  is_approved boolean not null default false,
   created_at timestamptz not null default now(),
   constraint product_reviews_product_user_unique unique (product_id, user_id)
 );
@@ -26,10 +27,16 @@ create index product_reviews_created_at_idx on public.product_reviews (created_a
 alter table public.product_reviews enable row level security;
 
 -- 3) RLS politikaları
-create policy "Anyone can read product reviews"
+create policy "Public can read approved reviews"
   on public.product_reviews
   for select
-  to anon, authenticated
+  to anon
+  using (is_approved = true);
+
+create policy "Authenticated can read all reviews"
+  on public.product_reviews
+  for select
+  to authenticated
   using (true);
 
 create policy "Authenticated users can insert product reviews"
@@ -37,3 +44,16 @@ create policy "Authenticated users can insert product reviews"
   for insert
   to authenticated
   with check (auth.uid() = user_id);
+
+create policy "Authenticated users can update product reviews"
+  on public.product_reviews
+  for update
+  to authenticated
+  using (true)
+  with check (true);
+
+create policy "Authenticated users can delete product reviews"
+  on public.product_reviews
+  for delete
+  to authenticated
+  using (true);

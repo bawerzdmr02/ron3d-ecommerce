@@ -20,6 +20,7 @@ import {
   Link2,
   Loader2,
   LogOut,
+  MessageSquareWarning,
   Package,
   Pencil,
   Trash2,
@@ -29,12 +30,18 @@ import {
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FormEvent, useCallback, useMemo, useRef, useState } from "react";
+import AdminReviewPanel, {
+  type PendingReview,
+} from "./AdminReviewPanel";
 
 const BUCKET = "product-assets";
 
 interface AdminDashboardProps {
   initialProducts: Product[];
+  initialPendingReviews: PendingReview[];
 }
+
+type AdminTab = "products" | "reviews";
 
 function pickFile(files: FileList | null): File | null {
   if (!files || files.length === 0) return null;
@@ -43,6 +50,7 @@ function pickFile(files: FileList | null): File | null {
 
 export default function AdminDashboard({
   initialProducts,
+  initialPendingReviews,
 }: AdminDashboardProps) {
   const router = useRouter();
   const supabase = useMemo(() => createClient(), []);
@@ -50,6 +58,7 @@ export default function AdminDashboard({
   const imageInputRef = useRef<HTMLInputElement>(null);
   const modelInputRef = useRef<HTMLInputElement>(null);
 
+  const [activeTab, setActiveTab] = useState<AdminTab>("products");
   const [products, setProducts] = useState<Product[]>(initialProducts);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -310,15 +319,48 @@ export default function AdminDashboard({
       </header>
 
       <main className="mx-auto max-w-5xl px-6 py-10">
-        <div className="mb-10 space-y-1">
+        <div className="mb-8 space-y-1">
           <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
-            Ürünler
+            Yönetim
           </h1>
           <p className="text-sm text-slate-500">
-            Yeni ürün ekleyin veya mevcut ürünü seçerek güncelleyin.
+            Ürünleri ve müşteri yorumlarını yönetin.
           </p>
         </div>
 
+        <div className="mb-8 flex gap-2 rounded-2xl border border-zinc-200 bg-white p-1.5 shadow-sm">
+          <button
+            type="button"
+            onClick={() => setActiveTab("products")}
+            className={`flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors ${
+              activeTab === "products"
+                ? "bg-slate-900 text-white"
+                : "text-slate-600 hover:bg-zinc-50"
+            }`}
+          >
+            <Package className="h-4 w-4" />
+            Ürünler
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab("reviews")}
+            className={`flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors ${
+              activeTab === "reviews"
+                ? "bg-slate-900 text-white"
+                : "text-slate-600 hover:bg-zinc-50"
+            }`}
+          >
+            <MessageSquareWarning className="h-4 w-4" />
+            Yorum Yönetimi
+          </button>
+        </div>
+
+        {activeTab === "reviews" ? (
+          <AdminReviewPanel
+            initialPending={initialPendingReviews}
+            onToast={showToast}
+          />
+        ) : (
         <div className="grid gap-8 lg:grid-cols-[1fr_320px]">
           <section className="rounded-3xl border border-zinc-200 bg-white p-6 shadow-[0_2px_20px_-8px_rgba(15,23,42,0.08)]">
             <div className="mb-6 flex items-center justify-between gap-3">
@@ -630,6 +672,7 @@ export default function AdminDashboard({
             )}
           </aside>
         </div>
+        )}
       </main>
     </div>
   );

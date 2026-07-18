@@ -90,6 +90,9 @@ export default function Navbar() {
                 <div className="absolute right-0 mt-2 w-52 rounded-xl border border-slate-200 bg-white py-1 shadow-xl shadow-slate-200/50">
                   <p className="truncate px-4 py-2 text-xs text-slate-500">{userEmail}</p>
                   <div className="border-t border-slate-100">
+                    <Link href="/hesabim" onClick={() => setMenuOpen(false)} className="flex items-center gap-2 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50">
+                      <User className="h-4 w-4 text-sky-500" /> Hesabım
+                    </Link>
                     <Link href="/hesabim/siparislerim" onClick={() => setMenuOpen(false)} className="flex items-center gap-2 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50">
                       <Package className="h-4 w-4 text-sky-500" /> Siparişlerim
                     </Link>
@@ -118,7 +121,14 @@ export default function Navbar() {
           </form>
           <Link href="/#products" onClick={() => setMobileOpen(false)} className="block rounded-lg px-3 py-2 text-sm font-medium hover:bg-slate-50">Koleksiyon</Link>
           <Link href="/hakkimizda" onClick={() => setMobileOpen(false)} className="block rounded-lg px-3 py-2 text-sm font-medium hover:bg-slate-50">Hakkımızda</Link>
-          <Link href="/giris" onClick={() => setMobileOpen(false)} className="mt-2 block rounded-xl bg-sky-600 px-4 py-2.5 text-center text-sm font-semibold text-white">Giriş / Üye Ol</Link>
+          {userEmail ? (
+            <>
+              <Link href="/hesabim" onClick={() => setMobileOpen(false)} className="block rounded-lg px-3 py-2 text-sm font-medium hover:bg-slate-50">Hesabım</Link>
+              <Link href="/hesabim/siparislerim" onClick={() => setMobileOpen(false)} className="block rounded-lg px-3 py-2 text-sm font-medium hover:bg-slate-50">Siparişlerim</Link>
+            </>
+          ) : (
+            <Link href="/giris" onClick={() => setMobileOpen(false)} className="mt-2 block rounded-xl bg-sky-600 px-4 py-2.5 text-center text-sm font-semibold text-white">Giriş / Üye Ol</Link>
+          )}
         </div>
       )}
     </header>
