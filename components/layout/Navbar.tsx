@@ -46,7 +46,7 @@ export default function Navbar() {
   }
 
   return (
-    <header className="border-b border-slate-200/80 bg-white">
+    <header className="relative z-50 border-b border-slate-200/80 bg-white">
       <div className="mx-auto flex min-h-[5.5rem] max-w-6xl items-center gap-3 px-4 py-2 sm:min-h-[6.5rem] sm:gap-5 sm:px-5 md:min-h-[7.5rem]">
         <Logo size="nav" priority />
 
@@ -72,7 +72,7 @@ export default function Navbar() {
           </div>
         </form>
 
-        <div className="ml-auto flex items-center gap-2">
+        <div className="relative z-50 ml-auto flex items-center gap-2">
           {userEmail ? (
             <div className="relative" ref={menuRef}>
               <button
@@ -87,7 +87,7 @@ export default function Navbar() {
                 <ChevronDown className="h-4 w-4 text-slate-400" />
               </button>
               {menuOpen && (
-                <div className="absolute right-0 mt-2 w-52 rounded-xl border border-slate-200 bg-white py-1 shadow-xl shadow-slate-200/50">
+                <div className="absolute right-0 z-[60] mt-2 w-52 rounded-xl border border-slate-200 bg-white py-1 shadow-xl shadow-slate-200/50">
                   <p className="truncate px-4 py-2 text-xs text-slate-500">{userEmail}</p>
                   <div className="border-t border-slate-100">
                     <Link href="/hesabim" onClick={() => setMenuOpen(false)} className="flex items-center gap-2 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50">
@@ -115,7 +115,7 @@ export default function Navbar() {
       </div>
 
       {mobileOpen && (
-        <div className="border-t border-slate-100 px-5 py-4 md:hidden">
+        <div className="relative z-50 border-t border-slate-100 bg-white px-5 py-4 md:hidden">
           <form onSubmit={handleSearch} className="mb-3">
             <input type="search" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Ürün ara…" className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm outline-none focus:border-sky-400" />
           </form>
