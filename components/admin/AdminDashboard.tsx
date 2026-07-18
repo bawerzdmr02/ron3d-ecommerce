@@ -16,6 +16,7 @@ import { createClient } from "@/utils/supabase/client";
 import {
   ArrowLeft,
   Box,
+  ClipboardList,
   ImagePlus,
   Link2,
   Loader2,
@@ -30,6 +31,8 @@ import {
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FormEvent, useCallback, useMemo, useRef, useState } from "react";
+import type { Order } from "@/lib/types/order";
+import AdminOrderPanel from "./AdminOrderPanel";
 import AdminReviewPanel, {
   type PendingReview,
 } from "./AdminReviewPanel";
@@ -39,9 +42,10 @@ const BUCKET = "product-assets";
 interface AdminDashboardProps {
   initialProducts: Product[];
   initialPendingReviews: PendingReview[];
+  initialOrders: Order[];
 }
 
-type AdminTab = "products" | "reviews";
+type AdminTab = "products" | "reviews" | "orders";
 
 function pickFile(files: FileList | null): File | null {
   if (!files || files.length === 0) return null;
@@ -51,6 +55,7 @@ function pickFile(files: FileList | null): File | null {
 export default function AdminDashboard({
   initialProducts,
   initialPendingReviews,
+  initialOrders,
 }: AdminDashboardProps) {
   const router = useRouter();
   const supabase = useMemo(() => createClient(), []);
@@ -328,7 +333,7 @@ export default function AdminDashboard({
           </p>
         </div>
 
-        <div className="mb-8 flex gap-2 rounded-2xl border border-zinc-200 bg-white p-1.5 shadow-sm">
+        <div className="mb-8 flex flex-col gap-2 rounded-2xl border border-zinc-200 bg-white p-1.5 shadow-sm sm:flex-row">
           <button
             type="button"
             onClick={() => setActiveTab("products")}
@@ -340,6 +345,18 @@ export default function AdminDashboard({
           >
             <Package className="h-4 w-4" />
             Ürünler
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab("orders")}
+            className={`flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors ${
+              activeTab === "orders"
+                ? "bg-slate-900 text-white"
+                : "text-slate-600 hover:bg-zinc-50"
+            }`}
+          >
+            <ClipboardList className="h-4 w-4" />
+            Sipariş Yönetimi
           </button>
           <button
             type="button"
@@ -360,6 +377,8 @@ export default function AdminDashboard({
             initialPending={initialPendingReviews}
             onToast={showToast}
           />
+        ) : activeTab === "orders" ? (
+          <AdminOrderPanel initialOrders={initialOrders} onToast={showToast} />
         ) : (
         <div className="grid gap-8 lg:grid-cols-[1fr_320px]">
           <section className="rounded-3xl border border-zinc-200 bg-white p-6 shadow-[0_2px_20px_-8px_rgba(15,23,42,0.08)]">
