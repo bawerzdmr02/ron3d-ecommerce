@@ -37,10 +37,10 @@ export default async function HomePage() {
       <Navbar />
       <main>
         <HeroBanner />
-        <CategoryShowcase categories={categories} />
         <Suspense fallback={<Fallback />}>
           <ProductGrid />
         </Suspense>
+        <CategoryShowcase categories={categories} />
 
         <section id="about" className="scroll-mt-20 border-t border-slate-100 bg-slate-50 py-16 lg:py-20">
           <div className="mx-auto max-w-6xl px-5">
