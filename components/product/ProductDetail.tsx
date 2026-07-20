@@ -2,6 +2,7 @@
 
 import Toast from "@/components/ui/Toast";
 import StarRating from "@/components/ui/StarRating";
+import { categoryToSlug } from "@/lib/constants/categories";
 import { useShopierPurchase } from "@/lib/hooks/useShopierPurchase";
 import type { Product } from "@/lib/types/product";
 import type { ProductReview } from "@/lib/types/review";
@@ -115,7 +116,9 @@ export default function ProductDetail({
         <div className="mx-auto max-w-6xl px-5 py-3 text-sm text-slate-500">
           <Link href="/" className="hover:text-sky-600">Ana Sayfa</Link>
           <span className="mx-2">/</span>
-          <Link href="/#products" className="hover:text-sky-600">{category}</Link>
+          <Link href={`/kategori/${categoryToSlug(category)}`} className="hover:text-sky-600">
+            {category}
+          </Link>
           <span className="mx-2">/</span>
           <span className="text-slate-800">{product.title}</span>
         </div>

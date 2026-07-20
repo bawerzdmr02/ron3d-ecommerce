@@ -32,6 +32,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FormEvent, useCallback, useMemo, useRef, useState } from "react";
 import type { Order } from "@/lib/types/order";
+import type { CategoryMeta } from "@/lib/types/category";
+import AdminCategoryPanel from "./AdminCategoryPanel";
 import AdminOrderPanel from "./AdminOrderPanel";
 import AdminReviewPanel, {
   type PendingReview,
@@ -43,9 +45,10 @@ interface AdminDashboardProps {
   initialProducts: Product[];
   initialPendingReviews: PendingReview[];
   initialOrders: Order[];
+  initialCategories: CategoryMeta[];
 }
 
-type AdminTab = "products" | "reviews" | "orders";
+type AdminTab = "products" | "reviews" | "orders" | "categories";
 
 function pickFile(files: FileList | null): File | null {
   if (!files || files.length === 0) return null;
@@ -56,6 +59,7 @@ export default function AdminDashboard({
   initialProducts,
   initialPendingReviews,
   initialOrders,
+  initialCategories,
 }: AdminDashboardProps) {
   const router = useRouter();
   const supabase = useMemo(() => createClient(), []);
@@ -360,6 +364,18 @@ export default function AdminDashboard({
           </button>
           <button
             type="button"
+            onClick={() => setActiveTab("categories")}
+            className={`flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors ${
+              activeTab === "categories"
+                ? "bg-slate-900 text-white"
+                : "text-slate-600 hover:bg-zinc-50"
+            }`}
+          >
+            <ImagePlus className="h-4 w-4" />
+            Kategoriler
+          </button>
+          <button
+            type="button"
             onClick={() => setActiveTab("reviews")}
             className={`flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors ${
               activeTab === "reviews"
@@ -379,6 +395,11 @@ export default function AdminDashboard({
           />
         ) : activeTab === "orders" ? (
           <AdminOrderPanel initialOrders={initialOrders} onToast={showToast} />
+        ) : activeTab === "categories" ? (
+          <AdminCategoryPanel
+            initialCategories={initialCategories}
+            onToast={showToast}
+          />
         ) : (
         <div className="grid gap-8 lg:grid-cols-[1fr_320px]">
           <section className="rounded-3xl border border-zinc-200 bg-white p-6 shadow-[0_2px_20px_-8px_rgba(15,23,42,0.08)]">

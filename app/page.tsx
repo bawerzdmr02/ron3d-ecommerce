@@ -1,6 +1,8 @@
 import Navbar from "@/components/layout/Navbar";
 import HeroBanner from "@/components/home/HeroBanner";
+import CategoryShowcase from "@/components/home/CategoryShowcase";
 import ProductGrid from "@/components/home/ProductGrid";
+import { getCategoryCards } from "@/lib/data/categories";
 import { Box, Palette, Rotate3d, Shield } from "lucide-react";
 import Link from "next/link";
 import { Suspense } from "react";
@@ -27,12 +29,15 @@ const steps = [
   { icon: Box, title: "Teslim Al", text: "Özel üretim, kapınıza gelsin." },
 ];
 
-export default function HomePage() {
+export default async function HomePage() {
+  const categories = await getCategoryCards();
+
   return (
     <>
       <Navbar />
       <main>
         <HeroBanner />
+        <CategoryShowcase categories={categories} />
         <Suspense fallback={<Fallback />}>
           <ProductGrid />
         </Suspense>

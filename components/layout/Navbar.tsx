@@ -51,8 +51,11 @@ export default function Navbar() {
         <Logo size="nav" priority />
 
         <nav className="hidden items-center gap-6 lg:flex">
+          <Link href="/#kategoriler" className="text-sm font-medium text-slate-600 hover:text-sky-600">
+            Kategoriler
+          </Link>
           <Link href="/#products" className="text-sm font-medium text-slate-600 hover:text-sky-600">
-            Koleksiyon
+            Popüler
           </Link>
           <Link href="/hakkimizda" className="text-sm font-medium text-slate-600 hover:text-sky-600">
             Hakkımızda
@@ -119,7 +122,8 @@ export default function Navbar() {
           <form onSubmit={handleSearch} className="mb-3">
             <input type="search" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Ürün ara…" className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm outline-none focus:border-sky-400" />
           </form>
-          <Link href="/#products" onClick={() => setMobileOpen(false)} className="block rounded-lg px-3 py-2 text-sm font-medium hover:bg-slate-50">Koleksiyon</Link>
+          <Link href="/#kategoriler" onClick={() => setMobileOpen(false)} className="block rounded-lg px-3 py-2 text-sm font-medium hover:bg-slate-50">Kategoriler</Link>
+          <Link href="/#products" onClick={() => setMobileOpen(false)} className="block rounded-lg px-3 py-2 text-sm font-medium hover:bg-slate-50">Popüler Ürünler</Link>
           <Link href="/hakkimizda" onClick={() => setMobileOpen(false)} className="block rounded-lg px-3 py-2 text-sm font-medium hover:bg-slate-50">Hakkımızda</Link>
           {userEmail ? (
             <>

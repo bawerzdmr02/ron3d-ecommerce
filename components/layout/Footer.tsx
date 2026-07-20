@@ -21,7 +21,8 @@ export default function Footer() {
           <div>
             <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Mağaza</p>
             <ul className="mt-3 space-y-2 text-sm text-slate-600">
-              <li><Link href="/#products" className="hover:text-sky-600">Koleksiyon</Link></li>
+              <li><Link href="/#kategoriler" className="hover:text-sky-600">Kategoriler</Link></li>
+              <li><Link href="/#products" className="hover:text-sky-600">Popüler Ürünler</Link></li>
               <li><Link href="/hakkimizda" className="hover:text-sky-600">Hakkımızda</Link></li>
             </ul>
           </div>

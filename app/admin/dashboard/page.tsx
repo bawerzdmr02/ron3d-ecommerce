@@ -1,6 +1,7 @@
 import AdminDashboard from "@/components/admin/AdminDashboard";
 import type { PendingReview } from "@/components/admin/AdminReviewPanel";
 import type { Order } from "@/lib/types/order";
+import type { CategoryMeta } from "@/lib/types/category";
 import type { Product } from "@/lib/types/product";
 import { createClient } from "@/utils/supabase/server";
 
@@ -79,15 +80,40 @@ async function getOrders(): Promise<Order[]> {
   }));
 }
 
+async function getCategories(): Promise<CategoryMeta[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("categories")
+    .select("*")
+    .order("sort_order", { ascending: true });
+
+  if (error) {
+    console.error("Kategoriler yüklenemedi:", error.message);
+    return [];
+  }
+
+  return (data ?? []) as CategoryMeta[];
+}
+
 export default async function AdminDashboardPage() {
-  const [initialProducts, initialPendingReviews, initialOrders] =
-    await Promise.all([getProducts(), getPendingReviews(), getOrders()]);
+  const [
+    initialProducts,
+    initialPendingReviews,
+    initialOrders,
+    initialCategories,
+  ] = await Promise.all([
+    getProducts(),
+    getPendingReviews(),
+    getOrders(),
+    getCategories(),
+  ]);
 
   return (
     <AdminDashboard
       initialProducts={initialProducts}
       initialPendingReviews={initialPendingReviews}
       initialOrders={initialOrders}
+      initialCategories={initialCategories}
     />
   );
 }

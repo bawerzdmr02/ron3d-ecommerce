@@ -1,5 +1,6 @@
 "use client";
 
+import { categoryToSlug } from "@/lib/constants/categories";
 import Toast from "@/components/ui/Toast";
 import { useShopierPurchase } from "@/lib/hooks/useShopierPurchase";
 import type { Product } from "@/lib/types/product";
@@ -69,7 +70,12 @@ export default function ProductCard({ product }: ProductCardProps) {
 
       <div className="flex flex-1 flex-col gap-3 p-4">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-sky-600">{category}</p>
+          <Link
+            href={`/kategori/${categoryToSlug(category)}`}
+            className="text-[11px] font-semibold uppercase tracking-wider text-sky-600 hover:text-sky-700"
+          >
+            {category}
+          </Link>
           <Link href={`/products/${product.id}`}>
             <h3 className="mt-1 line-clamp-2 text-base font-bold text-slate-900 group-hover:text-sky-700">
               {product.title}
