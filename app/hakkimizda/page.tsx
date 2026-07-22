@@ -16,9 +16,10 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "Hakkımızda | Ron3D",
+  title: "Hakkımızda",
   description:
     "Ron3D hakkında bilgi edinin. Kişiye özel 3D baskı, canlı önizleme ve güvenli alışveriş deneyimimizi keşfedin.",
+  alternates: { canonical: "/hakkimizda" },
 };
 
 const values = [

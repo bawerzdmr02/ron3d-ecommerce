@@ -13,8 +13,9 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 export const metadata: Metadata = {
-  title: "Hesabım | Ron3D",
+  title: "Hesabım",
   description: "Ron3D hesap bilgileriniz, siparişleriniz ve değerlendirmeleriniz.",
+  robots: { index: false, follow: false },
 };
 
 async function getUserOrders(userId: string): Promise<Order[]> {
