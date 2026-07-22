@@ -32,6 +32,7 @@ type RowState = CategoryMeta & {
   saving?: boolean;
   toggling?: boolean;
   clearing?: boolean;
+  deleting?: boolean;
   file?: File | null;
 };
 
@@ -204,6 +205,43 @@ export default function AdminCategoryPanel({
     [onToast, router, rows, supabase]
   );
 
+  const deleteCategory = useCallback(
+    async (id: string) => {
+      const row = rows.find((r) => r.id === id);
+      if (!row) return;
+
+      const ok = window.confirm(
+        `“${row.name}” kategorisini silmek istediğinize emin misiniz?\n\nBu işlem geri alınamaz. Bu kategorideki ürünler silinmez; kategori adı üründe kalır.`
+      );
+      if (!ok) return;
+
+      setRows((prev) =>
+        prev.map((r) => (r.id === id ? { ...r, deleting: true } : r))
+      );
+
+      try {
+        const { error } = await supabase
+          .from("categories")
+          .delete()
+          .eq("id", id);
+        if (error) throw new Error(error.message);
+
+        setRows((prev) => prev.filter((r) => r.id !== id));
+        onToast(`“${row.name}” kategorisi silindi.`, "success");
+        router.refresh();
+      } catch (err) {
+        onToast(
+          err instanceof Error ? err.message : "Kategori silinemedi.",
+          "error"
+        );
+        setRows((prev) =>
+          prev.map((r) => (r.id === id ? { ...r, deleting: false } : r))
+        );
+      }
+    },
+    [onToast, router, rows, supabase]
+  );
+
   async function handleAdd(e: FormEvent) {
     e.preventDefault();
     const name = newName.trim();
@@ -311,7 +349,7 @@ export default function AdminCategoryPanel({
             Kategori Yönetimi
           </h2>
           <p className="mt-1 text-sm text-slate-500">
-            Görsel yükle/sil, ana sayfada göster veya gizle.
+            Görsel yükle/sil, ana sayfada göster/gizle veya kategoriyi tamamen sil.
           </p>
         </div>
 
@@ -417,6 +455,20 @@ export default function AdminCategoryPanel({
                       <Trash2 className="h-4 w-4" />
                     )}
                     Görseli Sil
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => deleteCategory(row.id)}
+                    disabled={row.deleting}
+                    className="inline-flex items-center gap-1.5 rounded-xl bg-red-600 px-3 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50"
+                  >
+                    {row.deleting ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Trash2 className="h-4 w-4" />
+                    )}
+                    Kategoriyi Sil
                   </button>
 
                   <button
