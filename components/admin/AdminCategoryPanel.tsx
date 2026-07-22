@@ -88,14 +88,15 @@ export default function AdminCategoryPanel({
         const { data } = supabase.storage.from(BUCKET).getPublicUrl(path);
         const imageUrl = data.publicUrl;
 
-        const { error } = await supabase
-          .from("categories")
-          .update({
-            image_url: imageUrl,
-            updated_at: new Date().toISOString(),
-          })
-          .eq("id", id);
-        if (error) throw new Error(error.message);
+        const res = await fetch(`/api/admin/categories/${id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ image_url: imageUrl }),
+        });
+        const payload = (await res.json().catch(() => ({}))) as {
+          error?: string;
+        };
+        if (!res.ok) throw new Error(payload.error || "Görsel kaydedilemedi.");
 
         setRows((prev) =>
           prev.map((r) =>
@@ -129,14 +130,15 @@ export default function AdminCategoryPanel({
       );
 
       try {
-        const { error } = await supabase
-          .from("categories")
-          .update({
-            image_url: "",
-            updated_at: new Date().toISOString(),
-          })
-          .eq("id", id);
-        if (error) throw new Error(error.message);
+        const res = await fetch(`/api/admin/categories/${id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ image_url: "" }),
+        });
+        const payload = (await res.json().catch(() => ({}))) as {
+          error?: string;
+        };
+        if (!res.ok) throw new Error(payload.error || "Görsel silinemedi.");
 
         setRows((prev) =>
           prev.map((r) =>
@@ -157,7 +159,7 @@ export default function AdminCategoryPanel({
         );
       }
     },
-    [onToast, router, rows, supabase]
+    [onToast, router, rows]
   );
 
   const toggleVisible = useCallback(
@@ -171,14 +173,15 @@ export default function AdminCategoryPanel({
       );
 
       try {
-        const { error } = await supabase
-          .from("categories")
-          .update({
-            is_visible: next,
-            updated_at: new Date().toISOString(),
-          })
-          .eq("id", id);
-        if (error) throw new Error(error.message);
+        const res = await fetch(`/api/admin/categories/${id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ is_visible: next }),
+        });
+        const payload = (await res.json().catch(() => ({}))) as {
+          error?: string;
+        };
+        if (!res.ok) throw new Error(payload.error || "Görünürlük güncellenemedi.");
 
         setRows((prev) =>
           prev.map((r) =>
@@ -202,7 +205,7 @@ export default function AdminCategoryPanel({
         );
       }
     },
-    [onToast, router, rows, supabase]
+    [onToast, router, rows]
   );
 
   const deleteCategory = useCallback(
@@ -220,11 +223,16 @@ export default function AdminCategoryPanel({
       );
 
       try {
-        const { error } = await supabase
-          .from("categories")
-          .delete()
-          .eq("id", id);
-        if (error) throw new Error(error.message);
+        const res = await fetch(`/api/admin/categories/${id}`, {
+          method: "DELETE",
+        });
+        const payload = (await res.json().catch(() => ({}))) as {
+          error?: string;
+        };
+
+        if (!res.ok) {
+          throw new Error(payload.error || "Kategori silinemedi.");
+        }
 
         setRows((prev) => prev.filter((r) => r.id !== id));
         onToast(`“${row.name}” kategorisi silindi.`, "success");
@@ -239,7 +247,7 @@ export default function AdminCategoryPanel({
         );
       }
     },
-    [onToast, router, rows, supabase]
+    [onToast, router, rows]
   );
 
   async function handleAdd(e: FormEvent) {
@@ -260,32 +268,28 @@ export default function AdminCategoryPanel({
 
     setAdding(true);
     try {
-      const sortOrder =
-        rows.reduce((max, r) => Math.max(max, r.sort_order), 0) + 1;
+      const res = await fetch("/api/admin/categories", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, is_visible: true }),
+      });
+      const payload = (await res.json().catch(() => ({}))) as {
+        error?: string;
+        category?: CategoryMeta & { is_visible?: boolean };
+      };
 
-      const { data, error } = await supabase
-        .from("categories")
-        .insert({
-          name,
-          slug,
-          image_url: "",
-          sort_order: sortOrder,
-          is_visible: true,
-          updated_at: new Date().toISOString(),
-        })
-        .select("*")
-        .single();
-
-      if (error) throw new Error(error.message);
+      if (!res.ok || !payload.category) {
+        throw new Error(payload.error || "Kategori eklenemedi.");
+      }
 
       const created: CategoryMeta = {
-        id: data.id,
-        name: data.name,
-        slug: data.slug,
-        image_url: data.image_url ?? "",
-        sort_order: Number(data.sort_order ?? sortOrder),
-        is_visible: data.is_visible !== false,
-        updated_at: data.updated_at,
+        id: payload.category.id,
+        name: payload.category.name,
+        slug: payload.category.slug,
+        image_url: payload.category.image_url ?? "",
+        sort_order: Number(payload.category.sort_order ?? 0),
+        is_visible: payload.category.is_visible !== false,
+        updated_at: payload.category.updated_at,
       };
 
       setRows((prev) => toRows([...prev, created]));
