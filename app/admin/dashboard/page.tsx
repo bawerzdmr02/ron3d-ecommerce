@@ -3,7 +3,9 @@ import type { PendingReview } from "@/components/admin/AdminReviewPanel";
 import type { Order } from "@/lib/types/order";
 import type { CategoryMeta } from "@/lib/types/category";
 import type { Product } from "@/lib/types/product";
+import { isAdminUser } from "@/lib/auth/admin";
 import { createClient } from "@/utils/supabase/server";
+import { redirect } from "next/navigation";
 
 async function getProducts(): Promise<Product[]> {
   const supabase = await createClient();
@@ -96,6 +98,14 @@ async function getCategories(): Promise<CategoryMeta[]> {
 }
 
 export default async function AdminDashboardPage() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) redirect("/admin");
+  if (!isAdminUser(user)) redirect("/");
+
   const [
     initialProducts,
     initialPendingReviews,

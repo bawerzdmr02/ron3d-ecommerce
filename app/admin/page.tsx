@@ -1,6 +1,7 @@
 import AdminLoginForm from "@/components/admin/AdminLoginForm";
 import Link from "next/link";
 import { ArrowLeft, Box } from "lucide-react";
+import { Suspense } from "react";
 
 export default function AdminLoginPage() {
   return (
@@ -22,11 +23,20 @@ export default function AdminLoginPage() {
             Yönetici Girişi
           </h1>
           <p className="text-sm leading-relaxed text-slate-500">
-            Ürün yönetim paneline güvenli erişim.
+            Her girişte e-posta doğrulaması gerekir. Yalnızca yetkili hesaplar
+            erişebilir.
           </p>
         </div>
 
-        <AdminLoginForm />
+        <Suspense
+          fallback={
+            <div className="rounded-3xl border border-zinc-200 bg-white p-6 text-sm text-slate-500">
+              Yükleniyor…
+            </div>
+          }
+        >
+          <AdminLoginForm />
+        </Suspense>
       </div>
     </div>
   );
