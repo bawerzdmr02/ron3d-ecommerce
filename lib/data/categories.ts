@@ -1,10 +1,18 @@
 import { createClient } from "@/utils/supabase/server";
-import {
-  CATEGORY_SLUGS,
-  type ProductCategory,
-} from "@/lib/constants/categories";
 import type { CategoryCard, CategoryMeta } from "@/lib/types/category";
 import type { Product } from "@/lib/types/product";
+
+function normalizeMeta(row: Record<string, unknown>): CategoryMeta {
+  return {
+    id: String(row.id),
+    name: String(row.name),
+    slug: String(row.slug),
+    image_url: String(row.image_url ?? ""),
+    sort_order: Number(row.sort_order ?? 0),
+    is_visible: row.is_visible !== false,
+    updated_at: String(row.updated_at ?? new Date().toISOString()),
+  };
+}
 
 export async function getCategoryMetas(): Promise<CategoryMeta[]> {
   const supabase = await createClient();
@@ -18,12 +26,31 @@ export async function getCategoryMetas(): Promise<CategoryMeta[]> {
     return [];
   }
 
-  return (data ?? []) as CategoryMeta[];
+  return (data ?? []).map((row) => normalizeMeta(row as Record<string, unknown>));
 }
 
+export async function getCategoryBySlug(
+  slug: string
+): Promise<CategoryMeta | null> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("categories")
+    .select("*")
+    .eq("slug", slug)
+    .maybeSingle();
+
+  if (error) {
+    console.error("Kategori yüklenemedi:", error.message);
+    return null;
+  }
+
+  return data ? normalizeMeta(data as Record<string, unknown>) : null;
+}
+
+/** Homepage cards — only visible categories. */
 export async function getCategoryCards(): Promise<CategoryCard[]> {
   const metas = await getCategoryMetas();
-  const bySlug = new Map(metas.map((m) => [m.slug, m]));
+  const visible = metas.filter((m) => m.is_visible);
 
   const supabase = await createClient();
   const { data: products } = await supabase
@@ -41,25 +68,23 @@ export async function getCategoryCards(): Promise<CategoryCard[]> {
     }
   }
 
-  return CATEGORY_SLUGS.map(({ name, slug }) => {
-    const meta = bySlug.get(slug);
-    return {
-      name,
-      slug,
-      image_url: meta?.image_url || fallbackImages.get(name) || "",
-      product_count: counts.get(name) ?? 0,
-    };
-  });
+  return visible.map((meta) => ({
+    name: meta.name,
+    slug: meta.slug,
+    image_url: meta.image_url || fallbackImages.get(meta.name) || "",
+    product_count: counts.get(meta.name) ?? 0,
+    is_visible: meta.is_visible,
+  }));
 }
 
 export async function getProductsByCategory(
-  category: ProductCategory
+  categoryName: string
 ): Promise<Product[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("products")
     .select("*")
-    .eq("category", category)
+    .eq("category", categoryName)
     .order("created_at", { ascending: false });
 
   if (error) {

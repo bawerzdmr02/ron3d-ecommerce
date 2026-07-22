@@ -7,6 +7,7 @@ create table if not exists public.categories (
   slug text not null unique,
   image_url text not null default '',
   sort_order int not null default 0,
+  is_visible boolean not null default true,
   updated_at timestamptz not null default now()
 );
 
@@ -40,15 +41,15 @@ create policy "Authenticated can update categories"
   with check (true);
 
 -- Seed fixed storefront categories (images empty until admin uploads)
-insert into public.categories (name, slug, sort_order) values
-  ('Anahtarlık', 'anahtarlik', 1),
-  ('Oyuncak & Figür', 'oyuncak-figur', 2),
-  ('Motor & Araç Aksesuarı', 'motor-arac-aksesuari', 3),
-  ('3D Lithophane', '3d-lithophane', 4),
-  ('Dekoratif & Ev', 'dekoratif-ev', 5),
-  ('Yedek Parça & Tamir', 'yedek-parca-tamir', 6),
-  ('Kutu & Organizatör', 'kutu-organizator', 7),
-  ('Maket & Minyatür', 'maket-minyatur', 8),
-  ('Kişiye Özel', 'kisiye-ozel', 9),
-  ('Diğer', 'diger', 10)
+insert into public.categories (name, slug, sort_order, is_visible) values
+  ('Anahtarlık', 'anahtarlik', 1, true),
+  ('Oyuncak & Figür', 'oyuncak-figur', 2, true),
+  ('Motor & Araç Aksesuarı', 'motor-arac-aksesuari', 3, true),
+  ('3D Lithophane', '3d-lithophane', 4, true),
+  ('Dekoratif & Ev', 'dekoratif-ev', 5, true),
+  ('Yedek Parça & Tamir', 'yedek-parca-tamir', 6, true),
+  ('Kutu & Organizatör', 'kutu-organizator', 7, true),
+  ('Maket & Minyatür', 'maket-minyatur', 8, true),
+  ('Kişiye Özel', 'kisiye-ozel', 9, true),
+  ('Diğer', 'diger', 10, true)
 on conflict (slug) do nothing;

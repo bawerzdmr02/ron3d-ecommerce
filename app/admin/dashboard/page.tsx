@@ -94,7 +94,15 @@ async function getCategories(): Promise<CategoryMeta[]> {
     return [];
   }
 
-  return (data ?? []) as CategoryMeta[];
+  return (data ?? []).map((row) => ({
+    id: row.id,
+    name: row.name,
+    slug: row.slug,
+    image_url: row.image_url ?? "",
+    sort_order: Number(row.sort_order ?? 0),
+    is_visible: row.is_visible !== false,
+    updated_at: row.updated_at,
+  }));
 }
 
 export default async function AdminDashboardPage() {

@@ -1,13 +1,10 @@
 import CategoryProductBrowser from "@/components/home/CategoryProductBrowser";
 import Navbar from "@/components/layout/Navbar";
 import {
-  CATEGORY_SLUGS,
-  slugToCategory,
-} from "@/lib/constants/categories";
-import {
-  getCategoryCards,
+  getCategoryBySlug,
   getProductsByCategory,
 } from "@/lib/data/categories";
+import { CATEGORY_SLUGS } from "@/lib/constants/categories";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -22,25 +19,20 @@ export function generateStaticParams() {
 
 export async function generateMetadata({ params }: CategoryPageProps) {
   const { slug } = await params;
-  const category = slugToCategory(slug);
-  if (!category) return { title: "Kategori | Ron3D" };
+  const category = await getCategoryBySlug(slug);
+  if (!category) return { title: "Kategori" };
   return {
-    title: `${category} | Ron3D`,
-    description: `Ron3D ${category} kategorisindeki tüm 3D baskı ürünleri.`,
+    title: category.name,
+    description: `Ron3D ${category.name} kategorisindeki tüm 3D baskı ürünleri.`,
   };
 }
 
 export default async function CategoryPage({ params }: CategoryPageProps) {
   const { slug } = await params;
-  const category = slugToCategory(slug);
+  const category = await getCategoryBySlug(slug);
   if (!category) notFound();
 
-  const [products, cards] = await Promise.all([
-    getProductsByCategory(category),
-    getCategoryCards(),
-  ]);
-
-  const card = cards.find((c) => c.slug === slug);
+  const products = await getProductsByCategory(category.name);
 
   return (
     <>
@@ -62,19 +54,19 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
                   Kategori
                 </p>
                 <h1 className="mt-1 text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl">
-                  {category}
+                  {category.name}
                 </h1>
                 <p className="mt-2 text-sm text-slate-500">
                   {products.length} ürün · filtreleyin ve 3D inceleyin
                 </p>
               </div>
 
-              {card?.image_url ? (
+              {category.image_url ? (
                 <div className="relative h-28 w-full max-w-xs overflow-hidden rounded-2xl border border-slate-200 shadow-sm sm:h-32">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
-                    src={card.image_url}
-                    alt={category}
+                    src={category.image_url}
+                    alt={category.name}
                     className="h-full w-full object-cover"
                   />
                 </div>
@@ -86,7 +78,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
         <section className="py-12 lg:py-16">
           <div className="mx-auto max-w-6xl px-5">
             <CategoryProductBrowser
-              categoryName={category}
+              categoryName={category.name}
               products={products}
             />
           </div>

@@ -30,7 +30,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { FormEvent, useCallback, useMemo, useRef, useState } from "react";
+import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Order } from "@/lib/types/order";
 import type { CategoryMeta } from "@/lib/types/category";
 import AdminCategoryPanel from "./AdminCategoryPanel";
@@ -69,6 +69,21 @@ export default function AdminDashboard({
 
   const [activeTab, setActiveTab] = useState<AdminTab>("products");
   const [products, setProducts] = useState<Product[]>(initialProducts);
+  const [categoryOptions, setCategoryOptions] = useState<string[]>(() => {
+    const fromDb = initialCategories.map((c) => c.name);
+    const merged = Array.from(
+      new Set([...fromDb, ...PRODUCT_CATEGORIES])
+    ).sort((a, b) => a.localeCompare(b, "tr"));
+    return merged.length > 0 ? merged : [...PRODUCT_CATEGORIES];
+  });
+
+  useEffect(() => {
+    const fromDb = initialCategories.map((c) => c.name);
+    const merged = Array.from(
+      new Set([...fromDb, ...PRODUCT_CATEGORIES])
+    ).sort((a, b) => a.localeCompare(b, "tr"));
+    setCategoryOptions(merged.length > 0 ? merged : [...PRODUCT_CATEGORIES]);
+  }, [initialCategories]);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
@@ -478,7 +493,7 @@ export default function AdminDashboard({
                   disabled={submitting}
                   className="w-full rounded-xl border border-zinc-200 bg-zinc-50/80 px-4 py-3 text-sm outline-none transition-all focus:border-slate-400 focus:bg-white focus:ring-4 focus:ring-slate-900/5 disabled:opacity-60"
                 >
-                  {PRODUCT_CATEGORIES.map((item) => (
+                  {categoryOptions.map((item) => (
                     <option key={item} value={item}>
                       {item}
                     </option>

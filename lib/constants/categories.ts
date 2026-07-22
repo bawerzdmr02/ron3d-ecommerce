@@ -48,7 +48,7 @@ export const CATEGORY_SLUGS = PRODUCT_CATEGORIES.map((name) => ({
   slug: categoryToSlug(name),
 }));
 
-export function slugToCategory(slug: string): ProductCategory | null {
+export function slugToCategory(slug: string): string | null {
   const found = CATEGORY_SLUGS.find((c) => c.slug === slug);
   return found?.name ?? null;
 }

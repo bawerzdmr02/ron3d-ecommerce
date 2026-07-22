@@ -1,8 +1,8 @@
 import type { MetadataRoute } from "next";
-import { CATEGORY_SLUGS } from "@/lib/constants/categories";
+import { getCategoryMetas } from "@/lib/data/categories";
 import { getSiteUrl } from "@/lib/seo/site";
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = getSiteUrl();
   const now = new Date();
 
@@ -27,14 +27,15 @@ export default function sitemap(): MetadataRoute.Sitemap {
     },
   ];
 
-  const categoryPages: MetadataRoute.Sitemap = CATEGORY_SLUGS.map(
-    ({ slug }) => ({
-      url: `${base}/kategori/${slug}`,
+  const metas = await getCategoryMetas();
+  const categoryPages: MetadataRoute.Sitemap = metas
+    .filter((m) => m.is_visible)
+    .map((m) => ({
+      url: `${base}/kategori/${m.slug}`,
       lastModified: now,
       changeFrequency: "weekly" as const,
       priority: 0.9,
-    })
-  );
+    }));
 
   return [...staticPages, ...categoryPages];
 }
