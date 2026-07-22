@@ -8,13 +8,24 @@ function normalizeSupabaseUrl(raw: string): string {
   return url;
 }
 
+/** True when public Supabase env vars are present (needed for real API calls). */
+export function hasSupabaseEnv(): boolean {
+  return Boolean(
+    process.env.NEXT_PUBLIC_SUPABASE_URL?.trim() &&
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim()
+  );
+}
+
+/**
+ * Never throw during static prerender (Navbar/Footer SSR).
+ * Missing values use placeholders so `next build` can finish; runtime
+ * requests still need real Vercel/env vars.
+ */
 export function getSupabaseUrl(): string {
   const raw = process.env.NEXT_PUBLIC_SUPABASE_URL;
 
-  if (!raw) {
-    throw new Error(
-      "Missing NEXT_PUBLIC_SUPABASE_URL. Set it in .env.local to your project root, e.g. https://<ref>.supabase.co"
-    );
+  if (!raw?.trim()) {
+    return "https://placeholder.supabase.co";
   }
 
   const url = normalizeSupabaseUrl(raw);
@@ -34,9 +45,7 @@ export function getSupabaseAnonKey(): string {
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim();
 
   if (!key) {
-    throw new Error(
-      "Missing NEXT_PUBLIC_SUPABASE_ANON_KEY. Set it in .env.local from Supabase → Project Settings → API."
-    );
+    return "public-anon-key-missing";
   }
 
   return key;

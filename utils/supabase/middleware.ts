@@ -1,10 +1,18 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { isAdminUser } from "@/lib/auth/admin";
-import { getSupabaseAnonKey, getSupabaseUrl } from "./env";
+import {
+  getSupabaseAnonKey,
+  getSupabaseUrl,
+  hasSupabaseEnv,
+} from "./env";
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
+
+  if (!hasSupabaseEnv()) {
+    return supabaseResponse;
+  }
 
   const supabase = createServerClient(getSupabaseUrl(), getSupabaseAnonKey(), {
     cookies: {
