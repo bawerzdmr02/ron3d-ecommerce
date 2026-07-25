@@ -45,14 +45,12 @@ export default function ProductCatalog({ products }: ProductCatalogProps) {
                 : "Ürün bulunamadı."}
             </p>
           </div>
-          {!q && (
-            <Link
-              href="/#kategoriler"
-              className="text-sm font-semibold text-sky-600 hover:text-sky-700 hover:underline"
-            >
-              Tüm kategoriler →
-            </Link>
-          )}
+          <Link
+            href={q ? `/urunler?q=${encodeURIComponent(qRaw)}` : "/urunler"}
+            className="text-sm font-semibold text-sky-600 hover:text-sky-700 hover:underline"
+          >
+            {q ? "Tüm sonuçlar →" : "Tüm ürünleri gör →"}
+          </Link>
         </div>
 
         {products.length === 0 ? (

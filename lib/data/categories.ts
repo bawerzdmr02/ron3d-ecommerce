@@ -118,3 +118,22 @@ export async function getPopularProducts(limit = 9): Promise<Product[]> {
     category: row.category ?? "Diğer",
   }));
 }
+
+export async function getAllProducts(): Promise<Product[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("products")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("Tüm ürünler yüklenemedi:", error.message);
+    return [];
+  }
+
+  return (data ?? []).map((row) => ({
+    ...row,
+    price: Number(row.price),
+    category: row.category ?? "Diğer",
+  }));
+}

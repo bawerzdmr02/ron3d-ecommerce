@@ -80,6 +80,8 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
             <CategoryProductBrowser
               categoryName={category.name}
               products={products}
+              emptyTitle="Bu kategoride henüz ürün yok"
+              emptyHint="Yakında yeni ürünler eklenecek."
             />
           </div>
         </section>

@@ -34,7 +34,7 @@ export default function Navbar() {
   function handleSearch(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const q = query.trim();
-    router.push(q ? `/?q=${encodeURIComponent(q)}#products` : "/#products");
+    router.push(q ? `/urunler?q=${encodeURIComponent(q)}` : "/urunler");
     setMobileOpen(false);
   }
 
@@ -51,6 +51,9 @@ export default function Navbar() {
         <Logo size="nav" priority />
 
         <nav className="hidden items-center gap-6 lg:flex">
+          <Link href="/urunler" className="text-sm font-medium text-slate-600 hover:text-sky-600">
+            Tüm Ürünler
+          </Link>
           <Link href="/#kategoriler" className="text-sm font-medium text-slate-600 hover:text-sky-600">
             Kategoriler
           </Link>
@@ -122,6 +125,7 @@ export default function Navbar() {
           <form onSubmit={handleSearch} className="mb-3">
             <input type="search" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Ürün ara…" className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm outline-none focus:border-sky-400" />
           </form>
+          <Link href="/urunler" onClick={() => setMobileOpen(false)} className="block rounded-lg px-3 py-2 text-sm font-medium hover:bg-slate-50">Tüm Ürünler</Link>
           <Link href="/#kategoriler" onClick={() => setMobileOpen(false)} className="block rounded-lg px-3 py-2 text-sm font-medium hover:bg-slate-50">Kategoriler</Link>
           <Link href="/#products" onClick={() => setMobileOpen(false)} className="block rounded-lg px-3 py-2 text-sm font-medium hover:bg-slate-50">Popüler Ürünler</Link>
           <Link href="/hakkimizda" onClick={() => setMobileOpen(false)} className="block rounded-lg px-3 py-2 text-sm font-medium hover:bg-slate-50">Hakkımızda</Link>
