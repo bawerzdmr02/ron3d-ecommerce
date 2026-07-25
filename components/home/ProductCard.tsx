@@ -32,7 +32,8 @@ export default function ProductCard({ product }: ProductCardProps) {
     showCustomization,
   } = useShopierPurchase(product);
 
-  const showViewer = Boolean(product.model_url);
+  const showImage = Boolean(product.image_url);
+  const showViewer = !showImage && Boolean(product.model_url);
   const category = product.category ?? "Diğer";
 
   return (
@@ -40,14 +41,7 @@ export default function ProductCard({ product }: ProductCardProps) {
       {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
 
       <div className="relative aspect-[5/4] overflow-hidden bg-slate-100">
-        {showViewer ? (
-          <div className="absolute inset-0">
-            <ProductViewer3D
-              modelUrl={product.model_url}
-              customText={showCustomization ? customText : undefined}
-            />
-          </div>
-        ) : product.image_url ? (
+        {showImage ? (
           <Link href={`/products/${product.id}`} className="block h-full">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
@@ -56,6 +50,13 @@ export default function ProductCard({ product }: ProductCardProps) {
               className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
             />
           </Link>
+        ) : showViewer ? (
+          <div className="absolute inset-0">
+            <ProductViewer3D
+              modelUrl={product.model_url}
+              customText={showCustomization ? customText : undefined}
+            />
+          </div>
         ) : (
           <Link href={`/products/${product.id}`} className="flex h-full items-center justify-center text-slate-300">
             <Box className="h-10 w-10" />

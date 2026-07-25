@@ -259,14 +259,15 @@ export default function AdminDashboard({
       }
 
       assertValidUploadFile(imageFile, "Görsel");
-      assertValidUploadFile(modelFile, "3D model");
 
       const productId = crypto.randomUUID();
+      const imageUrl = await uploadAsset(productId, imageFile, "image");
 
-      const [imageUrl, modelUrl] = await Promise.all([
-        uploadAsset(productId, imageFile, "image"),
-        uploadAsset(productId, modelFile, "model"),
-      ]);
+      let modelUrl = "";
+      if (modelFile) {
+        assertValidUploadFile(modelFile, "3D model");
+        modelUrl = await uploadAsset(productId, modelFile, "model");
+      }
 
       const { error } = await supabase.from("products").insert({
         id: productId,
@@ -598,7 +599,7 @@ export default function AdminDashboard({
 
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-slate-800">
-                    3D Model (.glb){isEditing ? " (opsiyonel)" : ""}
+                    3D Model (.glb) (opsiyonel)
                   </label>
                   <input
                     ref={modelInputRef}
@@ -620,12 +621,12 @@ export default function AdminDashboard({
                         ? modelFile.name
                         : isEditing
                           ? "Yeni .glb seç (veya mevcut kalsın)"
-                          : ".glb dosyası yükle"}
+                          : ".glb yükle (zorunlu değil)"}
                     </p>
                     <p className="mt-1 text-xs text-slate-500">
                       {isEditing && editingProduct.model_url && !modelFile
                         ? "Mevcut model korunacak"
-                        : "Yalnızca GLB formatı"}
+                        : "Yalnızca GLB · boş bırakılabilir"}
                     </p>
                   </button>
                 </div>
