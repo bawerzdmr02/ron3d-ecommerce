@@ -38,14 +38,6 @@ export async function updateSession(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const isAdmin = isAdminUser(user);
 
-  if (pathname.startsWith("/hesabim") && !user) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/giris";
-    url.searchParams.set("redirect", pathname);
-    return NextResponse.redirect(url);
-  }
-
-  // /admin/dashboard — yalnızca admin
   if (pathname.startsWith("/admin/dashboard")) {
     if (!user) {
       const url = request.nextUrl.clone();
@@ -59,7 +51,6 @@ export async function updateSession(request: NextRequest) {
     }
   }
 
-  // /admin giriş sayfası — zaten admin ise panele al
   if (pathname === "/admin" && isAdmin) {
     const url = request.nextUrl.clone();
     url.pathname = "/admin/dashboard";
