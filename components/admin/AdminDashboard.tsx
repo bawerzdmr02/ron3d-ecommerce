@@ -168,19 +168,29 @@ export default function AdminDashboard({
   async function handleDelete(productId: string, productTitle: string) {
     if (!confirm(`"${productTitle}" silinsin mi? Bu işlem geri alınamaz.`)) return;
 
-    const { error } = await supabase.from("products").delete().eq("id", productId);
+    try {
+      const res = await fetch(`/api/admin/products/${productId}`, {
+        method: "DELETE",
+      });
+      const payload = (await res.json().catch(() => ({}))) as {
+        error?: string;
+      };
+      if (!res.ok) {
+        throw new Error(payload.error || "Ürün silinemedi.");
+      }
 
-    if (error) {
-      showToast(`Silme başarısız: ${error.message}`, "error");
-      return;
+      if (editingProduct?.id === productId) {
+        resetForm();
+      }
+
+      showToast(`"${productTitle}" silindi.`, "success");
+      fetchProducts();
+    } catch (err) {
+      showToast(
+        err instanceof Error ? err.message : "Ürün silinemedi.",
+        "error"
+      );
     }
-
-    if (editingProduct?.id === productId) {
-      resetForm();
-    }
-
-    showToast(`"${productTitle}" silindi.`, "success");
-    fetchProducts();
   }
 
   async function uploadAsset(
