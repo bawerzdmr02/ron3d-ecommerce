@@ -16,7 +16,6 @@ import { createClient } from "@/utils/supabase/client";
 import {
   ArrowLeft,
   Box,
-  ClipboardList,
   ImagePlus,
   Link2,
   Loader2,
@@ -31,10 +30,8 @@ import {
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { Order } from "@/lib/types/order";
 import type { CategoryMeta } from "@/lib/types/category";
 import AdminCategoryPanel from "./AdminCategoryPanel";
-import AdminOrderPanel from "./AdminOrderPanel";
 import AdminReviewPanel, {
   type PendingReview,
 } from "./AdminReviewPanel";
@@ -44,11 +41,10 @@ const BUCKET = "product-assets";
 interface AdminDashboardProps {
   initialProducts: Product[];
   initialPendingReviews: PendingReview[];
-  initialOrders: Order[];
   initialCategories: CategoryMeta[];
 }
 
-type AdminTab = "products" | "reviews" | "orders" | "categories";
+type AdminTab = "products" | "reviews" | "categories";
 
 function pickFile(files: FileList | null): File | null {
   if (!files || files.length === 0) return null;
@@ -58,7 +54,6 @@ function pickFile(files: FileList | null): File | null {
 export default function AdminDashboard({
   initialProducts,
   initialPendingReviews,
-  initialOrders,
   initialCategories,
 }: AdminDashboardProps) {
   const router = useRouter();
@@ -378,18 +373,6 @@ export default function AdminDashboard({
           </button>
           <button
             type="button"
-            onClick={() => setActiveTab("orders")}
-            className={`flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors ${
-              activeTab === "orders"
-                ? "bg-slate-900 text-white"
-                : "text-slate-600 hover:bg-zinc-50"
-            }`}
-          >
-            <ClipboardList className="h-4 w-4" />
-            Sipariş Yönetimi
-          </button>
-          <button
-            type="button"
             onClick={() => setActiveTab("categories")}
             className={`flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors ${
               activeTab === "categories"
@@ -419,8 +402,6 @@ export default function AdminDashboard({
             initialPending={initialPendingReviews}
             onToast={showToast}
           />
-        ) : activeTab === "orders" ? (
-          <AdminOrderPanel initialOrders={initialOrders} onToast={showToast} />
         ) : activeTab === "categories" ? (
           <AdminCategoryPanel
             initialCategories={initialCategories}
