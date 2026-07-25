@@ -149,33 +149,67 @@ async function findUserIdByEmail(
   return null;
 }
 
+function isUuid(value: string | undefined): value is string {
+  return Boolean(
+    value &&
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+        value
+      )
+  );
+}
+
 function extractOrderFields(payload: unknown) {
   const root = asRecord(payload);
   const data = asRecord(root?.data) ?? root;
-  const shipping = asRecord(data?.shippingAddress) ?? asRecord(data?.shipping);
+  const shipping =
+    asRecord(data?.shippingInfo) ??
+    asRecord(data?.shippingAddress) ??
+    asRecord(data?.shipping);
+  const billing = asRecord(data?.billingInfo) ?? asRecord(data?.billing);
   const buyer = asRecord(data?.buyer) ?? asRecord(data?.customer);
+  const totals = asRecord(data?.totals) ?? asRecord(root?.totals);
 
   const note =
     pickString(data, [
       "customerNote",
       "customer_note",
+      "customernote",
       "note",
       "customNote",
       "message",
       "custom_text",
     ]) ??
-    pickString(root, ["customerNote", "customer_note", "note"]);
+    pickString(root, [
+      "customerNote",
+      "customer_note",
+      "customernote",
+      "note",
+    ]);
 
-  const custom = parseCustomBlob(note);
+  // Shopier REST order payloads sometimes omit note fields; still scan raw JSON
+  // for our Ron3D intent code pasted into the customer note.
+  const rawBlob =
+    typeof payload === "string" ? payload : JSON.stringify(payload ?? {});
+  const ronFromAnywhere = extractRonCode(note) ?? extractRonCode(rawBlob);
+  const effectiveNote =
+    note ?? (ronFromAnywhere ? `Ron3D kod: ${ronFromAnywhere}` : undefined);
+
+  const custom = parseCustomBlob(effectiveNote);
 
   const email =
     pickString(data, ["email", "buyerEmail", "buyer_email"]) ??
     pickString(buyer, ["email"]) ??
-    pickString(shipping, ["email"]);
+    pickString(shipping, ["email"]) ??
+    pickString(billing, ["email"]);
 
   const orderId =
-    pickString(data, ["id", "orderId", "order_id", "platform_order_id"]) ??
-    pickString(root, ["id", "orderId"]);
+    pickString(data, [
+      "id",
+      "orderId",
+      "order_id",
+      "orderid",
+      "platform_order_id",
+    ]) ?? pickString(root, ["id", "orderId", "orderid"]);
 
   const price = parsePrice(
     data?.totalPrice ??
@@ -183,10 +217,11 @@ function extractOrderFields(payload: unknown) {
       data?.price ??
       data?.amount ??
       data?.total ??
+      totals?.total ??
       root?.price
   );
 
-  const productId =
+  const candidateProductId =
     custom.product_id ??
     pickString(data, ["productId", "product_id"]) ??
     (() => {
@@ -198,18 +233,30 @@ function extractOrderFields(payload: unknown) {
       return undefined;
     })();
 
+  // Shopier product IDs are not our UUIDs — ignore non-UUID values to avoid FK errors
+  const productId = isUuid(candidateProductId) ? candidateProductId : null;
+
   return {
     orderId,
     email,
     price,
     userId: custom.user_id,
-    productId: productId || null,
-    customText: custom.custom_text ?? note ?? null,
+    productId,
+    customText: custom.custom_text ?? effectiveNote ?? null,
   };
 }
 
 async function handleOrderCreated(payload: unknown) {
   const fields = extractOrderFields(payload);
+  console.info("[shopier webhook] order.created parsed", {
+    orderId: fields.orderId,
+    email: fields.email ? `${fields.email.slice(0, 3)}***` : null,
+    price: fields.price,
+    hasNote: Boolean(fields.customText),
+    ronCode: extractRonCode(fields.customText ?? undefined),
+    topKeys: Object.keys(asRecord(payload) ?? {}).slice(0, 20),
+  });
+
   const intent = await resolveCheckoutIntent(fields.customText ?? undefined);
 
   let userId = intent?.user_id ?? fields.userId ?? null;
@@ -325,6 +372,14 @@ async function handleRefundUpdated(payload: unknown) {
   } as const;
 }
 
+export async function GET() {
+  return NextResponse.json({
+    ok: true,
+    service: "shopier-webhook",
+    hasToken: Boolean(getShopierWebhookToken()),
+  });
+}
+
 export async function POST(request: Request) {
   const token = getShopierWebhookToken();
   if (!token) {
@@ -340,6 +395,11 @@ export async function POST(request: Request) {
     const signature = getHeader(request.headers, "shopier-signature");
 
     if (!verifyShopierSignature(token, rawBody, signature)) {
+      console.warn("[shopier webhook] invalid signature", {
+        hasSignature: Boolean(signature),
+        bodyLength: rawBody.length,
+        event: getHeader(request.headers, "shopier-event"),
+      });
       return NextResponse.json(
         { ok: false, error: "invalid_signature" },
         { status: 401 }
@@ -349,6 +409,12 @@ export async function POST(request: Request) {
     const eventType =
       getHeader(request.headers, "shopier-event")?.trim() ||
       "order.created";
+
+    console.info("[shopier webhook] received", {
+      eventType,
+      bodyLength: rawBody.length,
+      webhookId: getHeader(request.headers, "shopier-webhook-id"),
+    });
 
     let payload: unknown = {};
     if (rawBody) {
