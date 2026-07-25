@@ -6,7 +6,7 @@ import {
   type Order,
 } from "@/lib/types/order";
 import { createClient } from "@/utils/supabase/client";
-import { ClipboardList, Loader2 } from "lucide-react";
+import { ClipboardList, Loader2, Trash2 } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 
 interface AdminOrderPanelProps {
@@ -67,6 +67,35 @@ export default function AdminOrderPanel({
     setBusyId(null);
   }
 
+  async function deleteOrder(orderId: string) {
+    const ok = window.confirm(
+      "Bu siparişi silmek istediğinize emin misiniz? Bu işlem geri alınamaz."
+    );
+    if (!ok) return;
+
+    setBusyId(orderId);
+    try {
+      const res = await fetch(`/api/admin/orders/${orderId}`, {
+        method: "DELETE",
+      });
+      const payload = (await res.json().catch(() => ({}))) as {
+        error?: string;
+      };
+      if (!res.ok) {
+        throw new Error(payload.error || "Sipariş silinemedi.");
+      }
+      onToast("Sipariş silindi.", "success");
+      setOrders((prev) => prev.filter((o) => o.id !== orderId));
+    } catch (err) {
+      onToast(
+        err instanceof Error ? err.message : "Sipariş silinemedi.",
+        "error"
+      );
+    } finally {
+      setBusyId(null);
+    }
+  }
+
   return (
     <section className="rounded-3xl border border-zinc-200 bg-white p-6 shadow-[0_2px_20px_-8px_rgba(15,23,42,0.08)]">
       <div className="mb-6 flex items-center gap-2">
@@ -110,8 +139,8 @@ export default function AdminOrderPanel({
                       {new Date(order.created_at).toLocaleString("tr-TR")}
                     </p>
                     {order.custom_text && (
-                      <p className="mt-2 text-sm text-slate-600">
-                        <span className="font-medium text-slate-500">Özel yazı:</span>{" "}
+                      <p className="mt-2 whitespace-pre-wrap text-sm text-slate-600">
+                        <span className="font-medium text-slate-500">Not:</span>{" "}
                         {order.custom_text}
                       </p>
                     )}
@@ -120,27 +149,42 @@ export default function AdminOrderPanel({
                     </p>
                   </div>
 
-                  <div className="shrink-0 sm:w-52">
-                    <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-                      Durum
-                    </label>
-                    <div className="relative">
-                      <select
-                        value={order.status}
-                        disabled={busy}
-                        onChange={(e) => updateStatus(order.id, e.target.value)}
-                        className="w-full appearance-none rounded-xl border border-zinc-200 bg-white px-3 py-2.5 pr-8 text-sm font-medium text-slate-800 outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-100 disabled:opacity-50"
-                      >
-                        {ORDER_STATUSES.map((status) => (
-                          <option key={status} value={status}>
-                            {status}
-                          </option>
-                        ))}
-                      </select>
-                      {busy && (
-                        <Loader2 className="pointer-events-none absolute right-2.5 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-sky-500" />
-                      )}
+                  <div className="flex shrink-0 flex-col gap-2 sm:w-52">
+                    <div>
+                      <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                        Durum
+                      </label>
+                      <div className="relative">
+                        <select
+                          value={order.status}
+                          disabled={busy}
+                          onChange={(e) => updateStatus(order.id, e.target.value)}
+                          className="w-full appearance-none rounded-xl border border-zinc-200 bg-white px-3 py-2.5 pr-8 text-sm font-medium text-slate-800 outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-100 disabled:opacity-50"
+                        >
+                          {ORDER_STATUSES.map((status) => (
+                            <option key={status} value={status}>
+                              {status}
+                            </option>
+                          ))}
+                        </select>
+                        {busy && (
+                          <Loader2 className="pointer-events-none absolute right-2.5 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-sky-500" />
+                        )}
+                      </div>
                     </div>
+                    <button
+                      type="button"
+                      disabled={busy}
+                      onClick={() => deleteOrder(order.id)}
+                      className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-red-200 bg-white px-3 py-2.5 text-sm font-semibold text-red-700 hover:bg-red-50 disabled:opacity-50"
+                    >
+                      {busy ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Trash2 className="h-4 w-4" />
+                      )}
+                      Sil
+                    </button>
                   </div>
                 </div>
               </article>

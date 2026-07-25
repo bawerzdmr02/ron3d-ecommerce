@@ -38,6 +38,12 @@ function parsePrice(raw: unknown): number {
   return Number.isFinite(value) && value >= 0 ? value : 0;
 }
 
+function extractRonCode(note: string | undefined): string | null {
+  if (!note) return null;
+  const match = note.match(/\bRON-[A-Z0-9]{4,12}\b/i);
+  return match ? match[0].toUpperCase() : null;
+}
+
 function parseCustomBlob(raw: string | undefined): {
   user_id?: string;
   product_id?: string;
@@ -67,6 +73,56 @@ function parseCustomBlob(raw: string | undefined): {
   } catch {
     return {};
   }
+}
+
+async function resolveCheckoutIntent(note: string | undefined): Promise<{
+  user_id?: string;
+  product_id?: string | null;
+  custom_text?: string | null;
+  code?: string;
+} | null> {
+  const code = extractRonCode(note);
+  if (!code) return null;
+
+  const admin = createAdminClient();
+  const { data, error } = await admin
+    .from("checkout_intents")
+    .select("id, code, user_id, product_id, custom_text, consumed_at, expires_at")
+    .eq("code", code)
+    .maybeSingle();
+
+  if (error || !data) {
+    console.warn("[shopier webhook] checkout intent not found", { code, error });
+    return null;
+  }
+
+  if (data.consumed_at) {
+    console.warn("[shopier webhook] checkout intent already consumed", { code });
+    // Still return mapping so duplicate webhook retries can resolve user/product
+    return {
+      user_id: data.user_id,
+      product_id: data.product_id,
+      custom_text: data.custom_text,
+      code: data.code,
+    };
+  }
+
+  if (data.expires_at && new Date(data.expires_at).getTime() < Date.now()) {
+    console.warn("[shopier webhook] checkout intent expired", { code });
+  }
+
+  await admin
+    .from("checkout_intents")
+    .update({ consumed_at: new Date().toISOString() })
+    .eq("id", data.id)
+    .is("consumed_at", null);
+
+  return {
+    user_id: data.user_id,
+    product_id: data.product_id,
+    custom_text: data.custom_text,
+    code: data.code,
+  };
 }
 
 async function findUserIdByEmail(
@@ -154,7 +210,19 @@ function extractOrderFields(payload: unknown) {
 
 async function handleOrderCreated(payload: unknown) {
   const fields = extractOrderFields(payload);
-  let userId = fields.userId ?? null;
+  const intent = await resolveCheckoutIntent(fields.customText ?? undefined);
+
+  let userId = intent?.user_id ?? fields.userId ?? null;
+  const productId = intent?.product_id ?? fields.productId ?? null;
+
+  let displayNote = intent?.custom_text ?? null;
+  if (!displayNote && fields.customText) {
+    const cleaned = fields.customText
+      .replace(/\bRon3D kod:\s*RON-[A-Z0-9]+\b/gi, "")
+      .replace(/\bRON-[A-Z0-9]{4,12}\b/gi, "")
+      .trim();
+    displayNote = cleaned || null;
+  }
 
   if (!userId && fields.email) {
     userId = await findUserIdByEmail(fields.email);
@@ -164,6 +232,7 @@ async function handleOrderCreated(payload: unknown) {
     console.warn("[shopier webhook] order.created skipped: no user_id/email match", {
       orderId: fields.orderId,
       email: fields.email,
+      intentCode: intent?.code,
     });
     return {
       ok: true,
@@ -188,14 +257,16 @@ async function handleOrderCreated(payload: unknown) {
       return { ok: true, skipped: true, reason: "duplicate" } as const;
     }
 
-    const customText = fields.customText
-      ? `${fields.customText}\n${marker}`
-      : marker;
+    const noteParts = [
+      displayNote,
+      intent?.code ? `Ron3D kod: ${intent.code}` : null,
+      marker,
+    ].filter(Boolean);
 
     const { error } = await supabase.from("orders").insert({
       user_id: userId,
-      product_id: fields.productId,
-      custom_text: customText,
+      product_id: productId,
+      custom_text: noteParts.join("\n"),
       status: "Hazırlanıyor",
       price: fields.price,
     });
@@ -205,13 +276,18 @@ async function handleOrderCreated(payload: unknown) {
       return { ok: false, error: "insert_failed" } as const;
     }
 
-    return { ok: true } as const;
+    return { ok: true, matched_intent: Boolean(intent?.code) } as const;
   }
+
+  const noteParts = [
+    displayNote,
+    intent?.code ? `Ron3D kod: ${intent.code}` : null,
+  ].filter(Boolean);
 
   const { error } = await supabase.from("orders").insert({
     user_id: userId,
-    product_id: fields.productId,
-    custom_text: fields.customText,
+    product_id: productId,
+    custom_text: noteParts.length ? noteParts.join("\n") : null,
     status: "Hazırlanıyor",
     price: fields.price,
   });
@@ -221,7 +297,7 @@ async function handleOrderCreated(payload: unknown) {
     return { ok: false, error: "insert_failed" } as const;
   }
 
-  return { ok: true } as const;
+  return { ok: true, matched_intent: Boolean(intent?.code) } as const;
 }
 
 async function handleRefundUpdated(payload: unknown) {

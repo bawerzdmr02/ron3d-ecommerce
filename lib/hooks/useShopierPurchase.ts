@@ -3,13 +3,16 @@
 import type { Product } from "@/lib/types/product";
 import type { ToastType } from "@/components/ui/Toast";
 import { useEffect, useRef, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
 
-const REDIRECT_DELAY_MS = 2500;
+const REDIRECT_DELAY_MS = 2800;
 
-const CLIPBOARD_SUCCESS_MESSAGE =
-  'Tasarladığınız metin kopyalandı! Lütfen Shopier ödeme sayfasındaki "Sipariş Notu" kısmına yapıştırmayı unutmayın.';
+const NOTE_TOAST =
+  'Sipariş kodunuz kopyalandı. Shopier ödeme sayfasındaki "Sipariş Notu" alanına yapıştırın, sonra ödemeye devam edin.';
 
 export function useShopierPurchase(product: Product) {
+  const router = useRouter();
+  const pathname = usePathname();
   const [customText, setCustomText] = useState("");
   const [redirecting, setRedirecting] = useState(false);
   const [toast, setToast] = useState<{
@@ -29,28 +32,61 @@ export function useShopierPurchase(product: Product) {
   async function handleBuy() {
     if (!product.shopier_url || redirecting) return;
 
-    const trimmedText = customText.trim();
-    const shouldCopyText = showCustomization && trimmedText.length > 0;
+    setRedirecting(true);
+    setToast(null);
 
-    if (shouldCopyText) {
-      setRedirecting(true);
+    try {
+      const res = await fetch("/api/checkout/intent", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          product_id: product.id,
+          custom_text: customText.trim() || undefined,
+        }),
+      });
+
+      const payload = (await res.json().catch(() => ({}))) as {
+        error?: string;
+        note?: string;
+        shopier_url?: string;
+      };
+
+      if (res.status === 401) {
+        setToast({
+          message: "Satın almak için önce giriş yapın.",
+          type: "error",
+        });
+        setRedirecting(false);
+        const redirect = pathname || `/products/${product.id}`;
+        router.push(`/giris?redirect=${encodeURIComponent(redirect)}`);
+        return;
+      }
+
+      if (!res.ok || !payload.note || !payload.shopier_url) {
+        throw new Error(payload.error || "Ödeme hazırlanamadı.");
+      }
+
       try {
-        await navigator.clipboard.writeText(trimmedText);
-        setToast({ message: CLIPBOARD_SUCCESS_MESSAGE, type: "success" });
+        await navigator.clipboard.writeText(payload.note);
+        setToast({ message: NOTE_TOAST, type: "success" });
       } catch {
         setToast({
-          message:
-            'Metin kopyalanamadı. Lütfen metninizi not alın ve Shopier\'de "Sipariş Notu" alanına yapıştırın.',
+          message: `Metin kopyalanamadı. Shopier "Sipariş Notu"na şunu yapıştırın:\n${payload.note}`,
           type: "error",
         });
       }
-      redirectTimeoutRef.current = setTimeout(() => {
-        window.location.href = product.shopier_url;
-      }, REDIRECT_DELAY_MS);
-      return;
-    }
 
-    window.location.href = product.shopier_url;
+      redirectTimeoutRef.current = setTimeout(() => {
+        window.location.href = payload.shopier_url!;
+      }, REDIRECT_DELAY_MS);
+    } catch (err) {
+      setToast({
+        message:
+          err instanceof Error ? err.message : "Ödeme başlatılamadı.",
+        type: "error",
+      });
+      setRedirecting(false);
+    }
   }
 
   return {
