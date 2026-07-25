@@ -58,23 +58,6 @@ create policy "Admins can update categories"
   with check (public.is_admin());
 
 -- ---------------------------------------------------------------------------
--- Orders: users read own; admins read/update all
--- ---------------------------------------------------------------------------
-drop policy if exists "Authenticated can read all orders" on public.orders;
-drop policy if exists "Authenticated can update orders" on public.orders;
-drop policy if exists "Admins can read all orders" on public.orders;
-drop policy if exists "Admins can update orders" on public.orders;
-
-create policy "Admins can read all orders"
-  on public.orders for select to authenticated
-  using (public.is_admin());
-
-create policy "Admins can update orders"
-  on public.orders for update to authenticated
-  using (public.is_admin())
-  with check (public.is_admin());
-
--- ---------------------------------------------------------------------------
 -- Reviews: keep user insert; admin moderate
 -- ---------------------------------------------------------------------------
 drop policy if exists "Authenticated can read all reviews" on public.product_reviews;

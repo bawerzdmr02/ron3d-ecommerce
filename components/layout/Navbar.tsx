@@ -2,7 +2,7 @@
 
 import { createClient } from "@/utils/supabase/client";
 import Logo from "@/components/brand/Logo";
-import { ChevronDown, LogOut, Menu, Package, Search, User, X } from "lucide-react";
+import { ChevronDown, LogOut, Menu, Search, User, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
@@ -99,9 +99,6 @@ export default function Navbar() {
                     <Link href="/hesabim" onClick={() => setMenuOpen(false)} className="flex items-center gap-2 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50">
                       <User className="h-4 w-4 text-sky-500" /> Hesabım
                     </Link>
-                    <Link href="/hesabim/siparislerim" onClick={() => setMenuOpen(false)} className="flex items-center gap-2 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50">
-                      <Package className="h-4 w-4 text-sky-500" /> Siparişlerim
-                    </Link>
                     <button type="button" onClick={signOut} className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm text-slate-700 hover:bg-slate-50">
                       <LogOut className="h-4 w-4 text-slate-400" /> Çıkış Yap
                     </button>
@@ -132,7 +129,6 @@ export default function Navbar() {
           {userEmail ? (
             <>
               <Link href="/hesabim" onClick={() => setMobileOpen(false)} className="block rounded-lg px-3 py-2 text-sm font-medium hover:bg-slate-50">Hesabım</Link>
-              <Link href="/hesabim/siparislerim" onClick={() => setMobileOpen(false)} className="block rounded-lg px-3 py-2 text-sm font-medium hover:bg-slate-50">Siparişlerim</Link>
             </>
           ) : (
             <Link href="/giris" onClick={() => setMobileOpen(false)} className="mt-2 block rounded-xl bg-sky-600 px-4 py-2.5 text-center text-sm font-semibold text-white">Giriş / Üye Ol</Link>
